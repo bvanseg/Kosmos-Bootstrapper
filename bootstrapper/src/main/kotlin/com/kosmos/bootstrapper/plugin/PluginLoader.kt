@@ -41,12 +41,12 @@ object PluginLoader {
         }
 
         MasterResourceManager.resources.apply {
-            logger.debug("Loading plugin instances...")
+            logger.debug("Creating plugin instances...")
             val start = System.currentTimeMillis()
             getClassesWithAnnotation(Plugin::class.jvmName).loadClasses().forEach { pluginClass ->
                 instantiatePlugin(pluginClass)
             }
-            logger.debug("Finished loading ${plugins.size} plugins in ${System.currentTimeMillis() - start}ms")
+            logger.debug("Finished instantiating ${plugins.size} plugins in ${System.currentTimeMillis() - start}ms")
         }
         hasLoaded = true
     }
