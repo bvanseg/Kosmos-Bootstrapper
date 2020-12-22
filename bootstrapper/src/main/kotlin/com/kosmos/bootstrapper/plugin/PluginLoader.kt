@@ -29,6 +29,7 @@ internal class PluginLoader(private val location: String) {
     internal fun loadAllPlugins() {
         injectPlugins()
         findAndLoadPlugins()
+        checkPluginDependencies()
     }
 
     private fun findAndLoadPlugins() {
@@ -39,8 +40,8 @@ internal class PluginLoader(private val location: String) {
         MasterResourceManager.resources.apply {
             logger.debug("Loading plugin instances...")
             val start = System.currentTimeMillis()
-            getClassesWithAnnotation(Plugin::class.jvmName).loadClasses().forEach { PluginClass ->
-                loadPlugin(PluginClass)
+            getClassesWithAnnotation(Plugin::class.jvmName).loadClasses().forEach { pluginClass ->
+                loadPlugin(pluginClass)
             }
             logger.debug("Finished loading ${plugins.size} plugins in ${System.currentTimeMillis() - start}ms")
         }
@@ -95,5 +96,23 @@ internal class PluginLoader(private val location: String) {
         // Scan the resources after performing the injection.
         MasterResourceManager.scanResources(true, classGraph)
         logger.info("Finished plugin injection in ${System.currentTimeMillis() - start}ms")
+    }
+
+    private fun checkPluginDependencies() {
+        val toRemove = mutableListOf<String>()
+        plugins.forEach { (pluginDomain, pluginInstance) ->
+            val metadata = pluginInstance::class.java.getAnnotation(Plugin::class.java)
+
+            metadata.dependencies.forEach { dependencyDomain ->
+                if(dependencyDomain.isNotBlank() && plugins[dependencyDomain.toLowerCase()] == null) {
+                    logger.warn("Failed to load plugin with name '$pluginDomain': Missing plugin dependency '$dependencyDomain'. Removing dependent plugin to avoid issues...")
+                    toRemove.add(pluginDomain)
+                }
+            }
+        }
+
+        toRemove.forEach {
+            plugins.remove(it)
+        }
     }
 }
