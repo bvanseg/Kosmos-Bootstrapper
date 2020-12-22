@@ -3,7 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.4.10'
 }
 
-group 'com.cosmos.bootstrapper'
+group 'com.kosmos.bootstrapper'
 version '1.0.0'
 
 repositories {
