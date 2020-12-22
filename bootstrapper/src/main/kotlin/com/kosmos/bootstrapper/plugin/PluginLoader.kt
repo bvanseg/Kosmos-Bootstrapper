@@ -18,11 +18,9 @@ import kotlin.reflect.jvm.jvmName
  */
 internal class PluginLoader(private val location: String) {
 
-    val logger = getLogger()
+    private val logger = getLogger()
 
-    val EVENT_BUS = EventBus()
-
-    val plugins = mutableMapOf<String, Any>()
+    private val plugins = mutableMapOf<String, Any>()
 
     private var hasLoaded = false
 
@@ -105,7 +103,7 @@ internal class PluginLoader(private val location: String) {
 
             metadata.dependencies.forEach { dependencyDomain ->
                 if(dependencyDomain.isNotBlank() && plugins[dependencyDomain.toLowerCase()] == null) {
-                    logger.warn("Failed to load plugin with name '$pluginDomain': Missing plugin dependency '$dependencyDomain'. Removing dependent plugin to avoid issues...")
+                    logger.warn("Missing plugin dependency '$dependencyDomain' for plugin with domain name '$pluginDomain'. Removing dependent plugin to avoid issues...")
                     toRemove.add(pluginDomain)
                 }
             }
@@ -113,6 +111,42 @@ internal class PluginLoader(private val location: String) {
 
         toRemove.forEach {
             plugins.remove(it)
+        }
+
+        val pluginData = plugins.map { pluginEntry ->
+            val metadata = pluginEntry.value::class.java.getAnnotation(Plugin::class.java)
+
+            val dependents = mutableListOf<String>()
+
+            for (plugin in plugins) {
+                // Don't check the current plugin
+                if (plugin.key == metadata.domain) {
+                    continue
+                }
+
+                val dependencyMetadata = plugin.value::class.java.getAnnotation(Plugin::class.java)
+
+                if (dependencyMetadata.dependencies.contains(metadata.domain)) {
+                    dependents.add(plugin.key)
+                }
+            }
+
+            PluginData(metadata, dependents)
+        }
+
+        // For every plugin, check for duplicates in dependency and dependents.
+        pluginData.forEach { plugin ->
+            plugin.metadata.dependencies.forEach { dependencyDomain ->
+                if (plugin.dependents.contains(dependencyDomain)) {
+                    throw RuntimeException("Circular dependency detected: ${plugin.metadata.domain} <-> $dependencyDomain")
+                }
+            }
+
+            plugin.dependents.forEach { dependentDomain ->
+                if (plugin.metadata.dependencies.contains(dependentDomain)) {
+                    throw RuntimeException("Circular dependency detected: ${plugin.metadata.domain} <-> $dependentDomain")
+                }
+            }
         }
     }
 }
