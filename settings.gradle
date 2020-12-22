@@ -1,2 +1,3 @@
-rootProject.name = 'Kosmos Bootstrapper'
-
+rootProject.name = 'Kosmos'
+include 'bootstrapper'
+include 'sample'

@@ -1,0 +1,6 @@
+group 'com.kosmos.bootstrapper'
+
+dependencies {
+    // https://mvnrepository.com/artifact/io.github.classgraph/classgraph
+    compile group: 'io.github.classgraph', name: 'classgraph', version: '4.8.90'
+}
