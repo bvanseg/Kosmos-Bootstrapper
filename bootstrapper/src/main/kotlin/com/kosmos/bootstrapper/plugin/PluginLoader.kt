@@ -37,22 +37,22 @@ object PluginLoader {
 
     private fun findPluginsOnClasspath() {
         if (hasLoaded) {
-            throw IllegalStateException("Attempted to load plugins when plugins have already been loaded!")
+            throw IllegalStateException("Attempted to find plugins when plugins have already been loaded!")
         }
 
         MasterResourceManager.resources.apply {
             logger.debug("Loading plugin instances...")
             val start = System.currentTimeMillis()
             getClassesWithAnnotation(Plugin::class.jvmName).loadClasses().forEach { pluginClass ->
-                injectPlugin(pluginClass)
+                instantiatePlugin(pluginClass)
             }
             logger.debug("Finished loading ${plugins.size} plugins in ${System.currentTimeMillis() - start}ms")
         }
         hasLoaded = true
     }
 
-    private fun injectPlugin(pluginClass: Class<*>) = try {
-        logger.trace("Attempting to load plugin class ${pluginClass.name}")
+    private fun instantiatePlugin(pluginClass: Class<*>) = try {
+        logger.trace("Attempting to instantiate plugin class ${pluginClass.name}")
 
         val plugin = try {
             pluginClass.kotlin.objectInstance ?: createNewInstance(pluginClass)
@@ -71,14 +71,14 @@ object PluginLoader {
 
         plugins[domain] = plugin
     } catch (e: Exception) {
-        logger.error("Error trying to load plugin class ${pluginClass.name}", e)
+        logger.error("Error trying to instantiate plugin class ${pluginClass.name}", e)
     }
 
     /**
      * Loads all plugins onto the classpath from their respective JARs.
      */
-    private fun loadJARsFrom(location: String) {
-        logger.info("Beginning plugin injection")
+    fun loadJARsFrom(location: String) {
+        logger.info("Beginning JAR loading")
         val start = System.currentTimeMillis()
         val plugins = Files.walk(Path.of(location)).filter(Files::isRegularFile)
 
@@ -98,7 +98,7 @@ object PluginLoader {
 
         // Scan the resources after performing the injection.
         MasterResourceManager.scanResources(true, classGraph)
-        logger.info("Finished plugin injection in ${System.currentTimeMillis() - start}ms")
+        logger.info("Finished JAR loading in ${System.currentTimeMillis() - start}ms")
     }
 
     private fun checkPluginDependencies() {
