@@ -10,8 +10,8 @@ import com.kosmos.bootstrapper.plugin.PluginLoader
  * @author Boston Vanseghi
  * @since 1.0.0
  */
-@Plugin("1.0.0", "Game Plugin", "game", dependencies = ["game_engine"])
-class GamePlugin {
+@Plugin("1.0.0", "Third Party Plugin", "third_party", dependencies = ["game", "game_engine"])
+class ThirdPartyPlugin {
 
     private val logger = getLogger()
 
@@ -21,6 +21,7 @@ class GamePlugin {
 
     @SubscribeEvent
     private fun init(e: PluginInitializationEvent) {
-        logger.debug("Initializing Game plugin...")
+        logger.debug("Initializing Third Party plugin...")
+        Thread.sleep(200)
     }
 }

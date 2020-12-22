@@ -6,6 +6,7 @@ import bvanseg.kotlincommons.javaclass.createNewInstance
 import com.kosmos.bootstrapper.event.PluginInitializationEvent
 import com.kosmos.bootstrapper.resource.MasterResourceManager
 import io.github.classgraph.ClassGraph
+import kotlinx.coroutines.*
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
@@ -33,8 +34,7 @@ object PluginLoader {
         injectPlugins()
         findAndLoadPlugins()
         checkPluginDependencies()
-
-        EVENT_BUS.fire(PluginInitializationEvent())
+        initializePlugins()
     }
 
     private fun findAndLoadPlugins() {
@@ -155,5 +155,34 @@ object PluginLoader {
                 }
             }
         }
+    }
+
+    private fun initializePlugins() = runBlocking {
+
+        val event = PluginInitializationEvent()
+
+        val jobs = hashSetOf<Job>()
+        val resolvedPlugins = hashSetOf<String>()
+
+        plugins.forEach { pluginEntry ->
+            jobs.add(GlobalScope.launch {
+                val metadata = pluginEntry.value::class.java.getAnnotation(Plugin::class.java)
+
+                if (metadata.dependencies.isNotEmpty()) {
+                    while (true) {
+                        if (metadata.dependencies.all { resolvedPlugins.contains(it) }) {
+                            break
+                        } else {
+                            delay(50)
+                        }
+                    }
+                }
+
+                EVENT_BUS.fireForListener(pluginEntry.value, event)
+                resolvedPlugins.add(pluginEntry.key)
+            })
+        }
+
+        jobs.joinAll()
     }
 }
