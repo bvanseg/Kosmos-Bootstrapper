@@ -88,7 +88,7 @@ object PluginLoader {
             }
         }
 
-        plugins[domain] = PluginContainer(pluginClass, metadata, dependents)
+        plugins[domain] = PluginContainer(plugin, pluginClass, metadata, dependents)
     } catch (e: Exception) {
         logger.error("Error trying to instantiate plugin class ${pluginClass.name}", e)
     }
