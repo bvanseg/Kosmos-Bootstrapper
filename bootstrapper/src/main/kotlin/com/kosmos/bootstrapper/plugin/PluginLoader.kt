@@ -3,6 +3,7 @@ package com.kosmos.bootstrapper.plugin
 import bvanseg.kotlincommons.any.getLogger
 import bvanseg.kotlincommons.evenir.bus.EventBus
 import bvanseg.kotlincommons.javaclass.createNewInstance
+import com.kosmos.bootstrapper.event.PluginInitializationEvent
 import com.kosmos.bootstrapper.resource.MasterResourceManager
 import io.github.classgraph.ClassGraph
 import java.net.URL
@@ -16,11 +17,13 @@ import kotlin.reflect.jvm.jvmName
  * @author Boston Vanseghi
  * @since 1.0.0
  */
-internal object PluginLoader {
+object PluginLoader {
 
     internal lateinit var location: String
 
     private val logger = getLogger()
+
+    val EVENT_BUS = EventBus()
 
     private val plugins = mutableMapOf<String, Any>()
 
@@ -30,6 +33,8 @@ internal object PluginLoader {
         injectPlugins()
         findAndLoadPlugins()
         checkPluginDependencies()
+
+        EVENT_BUS.fire(PluginInitializationEvent())
     }
 
     private fun findAndLoadPlugins() {
