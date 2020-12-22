@@ -67,7 +67,7 @@ object PluginLoader {
         } ?: throw RuntimeException("Failed to load plugin for class $pluginClass")
 
         val metadata = pluginClass.getAnnotation(Plugin::class.java)
-        val domain = metadata.domain
+        val domain = metadata.domain.toLowerCase()
 
         if (plugins.containsKey(domain)) {
             throw RuntimeException("The domain name '$domain' is already being used by another plugin")
@@ -181,4 +181,6 @@ object PluginLoader {
 
         jobs.joinAll()
     }
+
+    fun getPlugin(domain: String) = plugins.get(domain.toLowerCase())
 }
