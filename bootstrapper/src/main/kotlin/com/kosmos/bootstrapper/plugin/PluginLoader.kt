@@ -11,6 +11,7 @@ import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.jvm.jvmName
 
 
@@ -24,31 +25,34 @@ object PluginLoader {
 
     val EVENT_BUS = EventBus()
 
-    private val plugins = mutableMapOf<String, Any>()
-
-    private var hasLoaded = false
+    private val plugins = ConcurrentHashMap<String, Any>()
 
     internal fun processPluginsAt(location: String) {
         loadJARsFrom(location)
-        findPluginsOnClasspath()
+        findPluginsOnClasspath(false)
         checkPluginDependencies()
         initializePlugins()
     }
 
-    private fun findPluginsOnClasspath() {
-        if (hasLoaded) {
-            throw IllegalStateException("Attempted to find plugins when plugins have already been loaded!")
-        }
+    fun findPluginsOnClasspath(ignoreExistingPlugins: Boolean = true) {
 
         MasterResourceManager.resources.apply {
-            logger.debug("Creating plugin instances...")
+            logger.debug("Instantiating plugins...")
             val start = System.currentTimeMillis()
-            getClassesWithAnnotation(Plugin::class.jvmName).loadClasses().forEach { pluginClass ->
+
+            for (pluginClass in getClassesWithAnnotation(Plugin::class.jvmName).loadClasses()) {
+
+                val metadata = pluginClass.getAnnotation(Plugin::class.java)
+
+                if (plugins.containsKey(metadata.domain) && ignoreExistingPlugins) {
+                    continue
+                }
+
                 instantiatePlugin(pluginClass)
             }
+
             logger.debug("Finished instantiating ${plugins.size} plugins in ${System.currentTimeMillis() - start}ms")
         }
-        hasLoaded = true
     }
 
     private fun instantiatePlugin(pluginClass: Class<*>) = try {
