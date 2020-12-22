@@ -16,7 +16,9 @@ import kotlin.reflect.jvm.jvmName
  * @author Boston Vanseghi
  * @since 1.0.0
  */
-internal class PluginLoader(private val location: String) {
+internal object PluginLoader {
+
+    internal lateinit var location: String
 
     private val logger = getLogger()
 
