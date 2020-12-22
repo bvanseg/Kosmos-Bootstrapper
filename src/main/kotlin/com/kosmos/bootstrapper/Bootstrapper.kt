@@ -4,11 +4,11 @@ import bvanseg.kotlincommons.any.getLogger
 import com.kosmos.bootstrapper.plugin.PluginLoader
 import kotlin.system.exitProcess
 
-class Bootstrapper {
+internal class Bootstrapper {
 
     companion object {
 
-        val logger = getLogger()
+        private val logger = getLogger()
 
         @JvmStatic
         fun main(vararg args: String) {
