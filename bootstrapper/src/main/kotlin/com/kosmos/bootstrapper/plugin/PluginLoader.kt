@@ -25,7 +25,7 @@ object PluginLoader {
 
     val EVENT_BUS = EventBus()
 
-    private val plugins = ConcurrentHashMap<String, Any>()
+    private val plugins = ConcurrentHashMap<String, PluginContainer>()
 
     internal fun processPluginsAt(location: String) {
         loadJARsFrom(location)
@@ -73,7 +73,22 @@ object PluginLoader {
             throw RuntimeException("The domain name '$domain' is already being used by another plugin")
         }
 
-        plugins[domain] = plugin
+        val dependents = mutableListOf<String>()
+
+        for (plg in plugins) {
+            // Don't check the current plugin
+            if (plg.key == metadata.domain) {
+                continue
+            }
+
+            val dependencyMetadata = plg.value.metadata
+
+            if (dependencyMetadata.dependencies.contains(metadata.domain)) {
+                dependents.add(plg.key)
+            }
+        }
+
+        plugins[domain] = PluginContainer(pluginClass, metadata, dependents)
     } catch (e: Exception) {
         logger.error("Error trying to instantiate plugin class ${pluginClass.name}", e)
     }
@@ -107,8 +122,8 @@ object PluginLoader {
 
     private fun checkPluginDependencies() {
         val toRemove = mutableListOf<String>()
-        plugins.forEach { (pluginDomain, pluginInstance) ->
-            val metadata = pluginInstance::class.java.getAnnotation(Plugin::class.java)
+        plugins.forEach { (pluginDomain, pluginContainer) ->
+            val metadata = pluginContainer.metadata
 
             metadata.dependencies.forEach { dependencyDomain ->
                 if(dependencyDomain.isNotBlank() && plugins[dependencyDomain.toLowerCase()] == null) {
@@ -122,29 +137,8 @@ object PluginLoader {
             plugins.remove(it)
         }
 
-        val pluginData = plugins.map { pluginEntry ->
-            val metadata = pluginEntry.value::class.java.getAnnotation(Plugin::class.java)
-
-            val dependents = mutableListOf<String>()
-
-            for (plugin in plugins) {
-                // Don't check the current plugin
-                if (plugin.key == metadata.domain) {
-                    continue
-                }
-
-                val dependencyMetadata = plugin.value::class.java.getAnnotation(Plugin::class.java)
-
-                if (dependencyMetadata.dependencies.contains(metadata.domain)) {
-                    dependents.add(plugin.key)
-                }
-            }
-
-            PluginData(metadata, dependents)
-        }
-
         // For every plugin, check for duplicates in dependency and dependents.
-        pluginData.forEach { plugin ->
+        plugins.forEach { (_, plugin) ->
             plugin.metadata.dependencies.forEach { dependencyDomain ->
                 if (plugin.dependents.contains(dependencyDomain)) {
                     throw RuntimeException("Circular dependency detected: ${plugin.metadata.domain} <-> $dependencyDomain")
@@ -168,7 +162,7 @@ object PluginLoader {
 
         plugins.forEach { pluginEntry ->
             jobs.add(GlobalScope.launch {
-                val metadata = pluginEntry.value::class.java.getAnnotation(Plugin::class.java)
+                val metadata = pluginEntry.value.metadata
 
                 if (metadata.dependencies.isNotEmpty()) {
                     while (true) {
