@@ -20,9 +20,7 @@ internal class Bootstrapper {
 
             val location = args[0]
 
-            PluginLoader.location = location
-
-            PluginLoader.loadAllPlugins()
+            PluginLoader.processPluginsAt(location)
         }
     }
 }

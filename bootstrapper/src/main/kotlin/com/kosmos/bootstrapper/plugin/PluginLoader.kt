@@ -20,8 +20,6 @@ import kotlin.reflect.jvm.jvmName
  */
 object PluginLoader {
 
-    internal lateinit var location: String
-
     private val logger = getLogger()
 
     val EVENT_BUS = EventBus()
@@ -30,14 +28,14 @@ object PluginLoader {
 
     private var hasLoaded = false
 
-    internal fun loadAllPlugins() {
-        injectPlugins()
-        findAndLoadPlugins()
+    internal fun processPluginsAt(location: String) {
+        loadJARsFrom(location)
+        findPluginsOnClasspath()
         checkPluginDependencies()
         initializePlugins()
     }
 
-    private fun findAndLoadPlugins() {
+    private fun findPluginsOnClasspath() {
         if (hasLoaded) {
             throw IllegalStateException("Attempted to load plugins when plugins have already been loaded!")
         }
@@ -46,14 +44,14 @@ object PluginLoader {
             logger.debug("Loading plugin instances...")
             val start = System.currentTimeMillis()
             getClassesWithAnnotation(Plugin::class.jvmName).loadClasses().forEach { pluginClass ->
-                loadPlugin(pluginClass)
+                injectPlugin(pluginClass)
             }
             logger.debug("Finished loading ${plugins.size} plugins in ${System.currentTimeMillis() - start}ms")
         }
         hasLoaded = true
     }
 
-    private fun loadPlugin(pluginClass: Class<*>) = try {
+    private fun injectPlugin(pluginClass: Class<*>) = try {
         logger.trace("Attempting to load plugin class ${pluginClass.name}")
 
         val plugin = try {
@@ -79,7 +77,7 @@ object PluginLoader {
     /**
      * Loads all plugins onto the classpath from their respective JARs.
      */
-    private fun injectPlugins() {
+    private fun loadJARsFrom(location: String) {
         logger.info("Beginning plugin injection")
         val start = System.currentTimeMillis()
         val plugins = Files.walk(Path.of(location)).filter(Files::isRegularFile)
