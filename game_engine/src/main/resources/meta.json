@@ -1,0 +1,10 @@
+{
+  "domain": "kosmos_engine",
+  "name": "Kosmos Engine",
+  "version": "1.0.0",
+  "authors": [
+    "Boston Vanseghi",
+    "Ocelot5836"
+  ],
+  "description": "A game engine built to run on the Kosmos Bootstrapper program."
+}
