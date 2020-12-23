@@ -207,14 +207,18 @@ object PluginLoader {
                 if (res.pathRelativeToClasspathElement.toLowerCase() == "meta.json") {
                     val tree = jsonMapper.readTree(content)
 
-                    val domain = tree.get("domain").asText("null").toLowerCase()
+                    val domain = tree.get("domain")?.asText("null")?.toLowerCase() ?: "null"
 
                     if (domain != "null") {
                         logger.info("Found plugin metadata for domain name '$domain'")
-                        val name = tree.get("name").asText("null")
-                        val version = tree.get("version").asText("null")
-                        val authors = tree.get("authors").map { it.asText() }
-                        val description = tree.get("description").asText("null")
+                        val name = tree.get("name")?.asText("null") ?: "null"
+                        val version = tree.get("version")?.asText("null") ?: "null"
+                        val authors = tree.get("authors")?.map { it.asText() } ?: listOf()
+                        val description = tree.get("description")?.asText("null") ?: "null"
+                        val websiteURL = tree.get("websiteURL")?.asText("null") ?: "null"
+                        val logoURL = tree.get("logoURL")?.asText("null") ?: "null"
+                        val credits = tree.get("credits")?.asText("null") ?: "null"
+                        val dependencies = tree.get("dependencies")?.map { it.asText() } ?: listOf()
 
                         val pluginContainer = plugins[domain]
 
@@ -223,7 +227,11 @@ object PluginLoader {
                                 name = name,
                                 version = version,
                                 authors = authors,
-                                description = description
+                                description = description,
+                                websiteURL = websiteURL,
+                                logoURL = logoURL,
+                                credits = credits,
+                                dependencies = dependencies
                             )
                         }
                     }
