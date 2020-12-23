@@ -37,7 +37,7 @@ object PluginLoader {
     fun findPluginsOnClasspath(ignoreExistingPlugins: Boolean = true) {
 
         MasterResourceManager.resources.apply {
-            logger.debug("Instantiating plugins...")
+            logger.info("Instantiating plugins...")
             val start = System.currentTimeMillis()
 
             for (pluginClass in getClassesWithAnnotation(Plugin::class.jvmName).loadClasses()) {
@@ -51,7 +51,7 @@ object PluginLoader {
                 instantiatePlugin(pluginClass)
             }
 
-            logger.debug("Finished instantiating ${plugins.size} plugins in ${System.currentTimeMillis() - start}ms")
+            logger.info("Finished instantiating ${plugins.size} plugins in ${System.currentTimeMillis() - start}ms")
         }
     }
 
@@ -177,6 +177,8 @@ object PluginLoader {
     }
 
     private fun initializePlugins() = runBlocking {
+        logger.info("Initializing all plugins...")
+        val start = System.currentTimeMillis()
 
         val event = PluginInitializationEvent()
 
@@ -207,6 +209,8 @@ object PluginLoader {
         }
 
         jobs.joinAll()
+
+        logger.info("Finished initializing all plugins in ${System.currentTimeMillis() - start}ms")
     }
 
     fun getPlugin(domain: String) = plugins[domain.toLowerCase()]
