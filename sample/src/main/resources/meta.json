@@ -1,0 +1,10 @@
+{
+  "domain": "a",
+  "name": "Plugin A",
+  "version": "1.0.0",
+  "authors": [
+    "Boston Vanseghi",
+    "Ocelot5836"
+  ],
+  "description": "A simple example of a plugin."
+}

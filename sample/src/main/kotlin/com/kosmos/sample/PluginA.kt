@@ -22,6 +22,7 @@ class PluginA {
     @SubscribeEvent
     private fun init(e: PluginInitializationEvent) {
         logger.debug("Initializing plugin A...")
+        logger.debug("Plugin A's description: " + PluginLoader.getPlugin("a")?.metadata?.description)
         Thread.sleep(200)
     }
 }

@@ -3,12 +3,14 @@ package com.kosmos.bootstrapper.plugin
 import bvanseg.kotlincommons.any.getLogger
 import bvanseg.kotlincommons.evenir.bus.EventBus
 import bvanseg.kotlincommons.javaclass.createNewInstance
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.kosmos.bootstrapper.event.PluginInitializationEvent
 import com.kosmos.bootstrapper.exception.CircularDependencyException
 import com.kosmos.bootstrapper.exception.DuplicateDomainException
 import com.kosmos.bootstrapper.exception.PluginInstantiationException
 import com.kosmos.bootstrapper.resource.MasterResourceManager
 import io.github.classgraph.ClassGraph
+import io.github.classgraph.Resource
 import kotlinx.coroutines.*
 import java.net.URL
 import java.net.URLClassLoader
@@ -30,10 +32,13 @@ object PluginLoader {
 
     private val plugins = ConcurrentHashMap<String, PluginContainer>()
 
+    private val jsonMapper = jacksonObjectMapper()
+
     internal fun processPluginsAt(location: String) {
         loadJARsFrom(location)
         findPluginsOnClasspath(false)
         checkPluginDependencies()
+        fetchPluginMetadata()
         initializePlugins()
     }
 
@@ -64,17 +69,17 @@ object PluginLoader {
      * @param pluginClass The class of the Plugin to instantiate. It is presumed this class has an annotation of type [Plugin].
      */
     private fun instantiatePlugin(pluginClass: Class<*>) = try {
-        logger.trace("Attempting to instantiate plugin class ${pluginClass.name}")
+        logger.trace("Attempting to instantiate plugin class '${pluginClass.name}'")
 
         val plugin = try {
             pluginClass.kotlin.objectInstance ?: createNewInstance(pluginClass)
         } catch(e: NoSuchMethodException) {
-            throw PluginInstantiationException("Failed to construct plugin class instance for $pluginClass. Make sure you have a no-arg constructor!", e)
+            throw PluginInstantiationException("Failed to construct plugin class instance for '$pluginClass'. Make sure you have a no-arg constructor!", e)
         } catch(e: UninitializedPropertyAccessException) {
-            throw PluginInstantiationException("Failed to construct plugin class instance for $pluginClass. Make sure you have a no-arg constructor!", e)
-        } ?: throw PluginInstantiationException("Failed to instantiate plugin for class $pluginClass")
+            throw PluginInstantiationException("Failed to construct plugin class instance for '$pluginClass'. Make sure you have a no-arg constructor!", e)
+        } ?: throw PluginInstantiationException("Failed to instantiate plugin for class '$pluginClass'")
 
-        val metadata = pluginClass.getAnnotation(Plugin::class.java) ?: throw RuntimeException("Failed to load plugin of class $pluginClass - missing @Plugin annotation. This should not be possible!")
+        val metadata = pluginClass.getAnnotation(Plugin::class.java) ?: throw RuntimeException("Failed to load plugin of class '$pluginClass' - missing @Plugin annotation. This should not be possible!")
         val lowerDomain = metadata.domain.toLowerCase()
 
         if (plugins.containsKey(lowerDomain)) {
@@ -89,7 +94,7 @@ object PluginLoader {
                 continue
             }
 
-            val dependencyMetadata = plg.value.metadata
+            val dependencyMetadata = plg.value.annotationData
 
             if (dependencyMetadata.dependencies.map { it.toLowerCase() }.contains(lowerDomain)) {
                 dependents.add(plg.key)
@@ -98,7 +103,7 @@ object PluginLoader {
 
         plugins[lowerDomain] = PluginContainer(plugin, pluginClass, metadata, dependents)
     } catch (e: Exception) {
-        logger.error("Error trying to instantiate plugin class ${pluginClass.name}", e)
+        logger.error("Error trying to instantiate plugin class '${pluginClass.name}'", e)
     }
 
     /**
@@ -118,7 +123,7 @@ object PluginLoader {
         plugins.filter(Files::isRegularFile).forEach {
             val file = it.toFile()
             if (file.extension.toLowerCase() == "jar") {
-                logger.info("Found potential plugin JAR $it")
+                logger.info("Found potential plugin JAR '$it'")
                 urls.add(file.toURI().toURL())
             }
         }
@@ -139,7 +144,7 @@ object PluginLoader {
         val toRemove = mutableListOf<String>()
         plugins.forEach { (pluginDomain, pluginContainer) ->
             val lowerPluginDomain = pluginDomain.toLowerCase()
-            val metadata = pluginContainer.metadata
+            val metadata = pluginContainer.annotationData
 
             metadata.dependencies.map { it.toLowerCase() }.forEach { dependencyDomain ->
                 val lowerDependencyDomain = dependencyDomain.toLowerCase()
@@ -158,11 +163,11 @@ object PluginLoader {
 
             val container = plugin.value
 
-            if (container.metadata.dependencies.isNotEmpty()) {
-                val result = validateDependencyTree(container.metadata.domain.toLowerCase(), container)
+            if (container.annotationData.dependencies.isNotEmpty()) {
+                val result = validateDependencyTree(container.annotationData.domain.toLowerCase(), container)
 
                 if (result) {
-                    throw CircularDependencyException("Circular dependency detected for plugin with domain name ${container.metadata.domain}!")
+                    throw CircularDependencyException("Circular dependency detected for plugin with domain name '${container.annotationData.domain}'!")
                 }
             }
         }
@@ -174,10 +179,10 @@ object PluginLoader {
      */
     private fun validateDependencyTree(rootDomain: String, pluginContainer: PluginContainer): Boolean {
 
-        for (dependency in pluginContainer.metadata.dependencies) {
+        for (dependency in pluginContainer.annotationData.dependencies) {
             val container = plugins[dependency.toLowerCase()] ?: continue
 
-            if (rootDomain == container.metadata.domain.toLowerCase()) {
+            if (rootDomain == container.annotationData.domain.toLowerCase()) {
                 return true
             }
 
@@ -189,6 +194,46 @@ object PluginLoader {
         }
 
         return false
+    }
+
+    private fun fetchPluginMetadata() {
+        logger.info("Fetching plugin metadata...")
+        val start = System.currentTimeMillis()
+
+        MasterResourceManager.resources.getResourcesWithExtension("json")
+        .forEachByteArray { res: Resource, content: ByteArray? ->
+
+            try {
+                if (res.pathRelativeToClasspathElement.toLowerCase() == "meta.json") {
+                    val tree = jsonMapper.readTree(content)
+
+                    val domain = tree.get("domain").asText("null").toLowerCase()
+
+                    if (domain != "null") {
+                        logger.info("Found plugin metadata for domain name '$domain'")
+                        val name = tree.get("name").asText("null")
+                        val version = tree.get("version").asText("null")
+                        val authors = tree.get("authors").map { it.asText() }
+                        val description = tree.get("description").asText("null")
+
+                        val pluginContainer = plugins[domain]
+
+                        if (pluginContainer != null) {
+                            pluginContainer.metadata = PluginMetadata(
+                                name = name,
+                                version = version,
+                                authors = authors,
+                                description = description
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        logger.info("Finished fetching all plugin metadata in ${System.currentTimeMillis() - start}ms")
     }
 
     /**
@@ -206,7 +251,7 @@ object PluginLoader {
         plugins.forEach { pluginEntry ->
             jobs.add(GlobalScope.launch {
                 try {
-                    val metadata = pluginEntry.value.metadata
+                    val metadata = pluginEntry.value.annotationData
 
                     if (metadata.dependencies.isNotEmpty()) {
                         while (true) {
