@@ -44,7 +44,7 @@ object PluginLoader {
 
                 val metadata = pluginClass.getAnnotation(Plugin::class.java)
 
-                if (plugins.containsKey(metadata.domain) && ignoreExistingPlugins) {
+                if (plugins.containsKey(metadata.domain.toLowerCase()) && ignoreExistingPlugins) {
                     continue
                 }
 
@@ -67,28 +67,28 @@ object PluginLoader {
         } ?: throw RuntimeException("Failed to load plugin for class $pluginClass")
 
         val metadata = pluginClass.getAnnotation(Plugin::class.java)
-        val domain = metadata.domain.toLowerCase()
+        val lowerDomain = metadata.domain.toLowerCase()
 
-        if (plugins.containsKey(domain)) {
-            throw RuntimeException("The domain name '$domain' is already being used by another plugin")
+        if (plugins.containsKey(lowerDomain)) {
+            throw RuntimeException("The domain name '$lowerDomain' is already being used by another plugin")
         }
 
         val dependents = mutableListOf<String>()
 
         for (plg in plugins) {
             // Don't check the current plugin
-            if (plg.key == metadata.domain) {
+            if (plg.key.toLowerCase() == lowerDomain) {
                 continue
             }
 
             val dependencyMetadata = plg.value.metadata
 
-            if (dependencyMetadata.dependencies.contains(metadata.domain)) {
+            if (dependencyMetadata.dependencies.map { it.toLowerCase() }.contains(lowerDomain)) {
                 dependents.add(plg.key)
             }
         }
 
-        plugins[domain] = PluginContainer(plugin, pluginClass, metadata, dependents)
+        plugins[lowerDomain] = PluginContainer(plugin, pluginClass, metadata, dependents)
     } catch (e: Exception) {
         logger.error("Error trying to instantiate plugin class ${pluginClass.name}", e)
     }
@@ -123,12 +123,14 @@ object PluginLoader {
     private fun checkPluginDependencies() {
         val toRemove = mutableListOf<String>()
         plugins.forEach { (pluginDomain, pluginContainer) ->
+            val lowerPluginDomain = pluginDomain.toLowerCase()
             val metadata = pluginContainer.metadata
 
-            metadata.dependencies.forEach { dependencyDomain ->
-                if(dependencyDomain.isNotBlank() && plugins[dependencyDomain.toLowerCase()] == null) {
-                    logger.warn("Missing plugin dependency '$dependencyDomain' for plugin with domain name '$pluginDomain'. Removing dependent plugin to avoid issues...")
-                    toRemove.add(pluginDomain)
+            metadata.dependencies.map { it.toLowerCase() }.forEach { dependencyDomain ->
+                val lowerDependencyDomain = dependencyDomain.toLowerCase()
+                if(lowerDependencyDomain.isNotBlank() && plugins[lowerDependencyDomain] == null) {
+                    logger.warn("Missing plugin dependency '$lowerDependencyDomain' for plugin with domain name '$lowerPluginDomain'. Removing dependent plugin to avoid issues...")
+                    toRemove.add(lowerPluginDomain)
                 }
             }
         }
@@ -142,7 +144,7 @@ object PluginLoader {
             val container = plugin.value
 
             if (container.metadata.dependencies.isNotEmpty()) {
-                val result = validateDependencyTree(container.metadata.domain, container)
+                val result = validateDependencyTree(container.metadata.domain.toLowerCase(), container)
 
                 if (result) {
                     throw RuntimeException("Circular dependency detected for plugin with domain name ${container.metadata.domain}!")
@@ -160,7 +162,7 @@ object PluginLoader {
         for (dependency in pluginContainer.metadata.dependencies) {
             val container = plugins[dependency.toLowerCase()] ?: continue
 
-            if (rootDomain == container.metadata.domain) {
+            if (rootDomain == container.metadata.domain.toLowerCase()) {
                 return true
             }
 
