@@ -4,6 +4,9 @@ import bvanseg.kotlincommons.any.getLogger
 import bvanseg.kotlincommons.evenir.bus.EventBus
 import bvanseg.kotlincommons.javaclass.createNewInstance
 import com.kosmos.bootstrapper.event.PluginInitializationEvent
+import com.kosmos.bootstrapper.exception.CircularDependencyException
+import com.kosmos.bootstrapper.exception.DuplicateDomainException
+import com.kosmos.bootstrapper.exception.PluginInstantiationException
 import com.kosmos.bootstrapper.resource.MasterResourceManager
 import io.github.classgraph.ClassGraph
 import kotlinx.coroutines.*
@@ -55,22 +58,27 @@ object PluginLoader {
         }
     }
 
+    /**
+     * Instantiates a plugin of the given class.
+     *
+     * @param pluginClass The class of the Plugin to instantiate. It is presumed this class has an annotation of type [Plugin].
+     */
     private fun instantiatePlugin(pluginClass: Class<*>) = try {
         logger.trace("Attempting to instantiate plugin class ${pluginClass.name}")
 
         val plugin = try {
             pluginClass.kotlin.objectInstance ?: createNewInstance(pluginClass)
         } catch(e: NoSuchMethodException) {
-            throw RuntimeException("Failed to construct plugin class instance for $pluginClass. Make sure you have a no-arg constructor!", e)
+            throw PluginInstantiationException("Failed to construct plugin class instance for $pluginClass. Make sure you have a no-arg constructor!", e)
         } catch(e: UninitializedPropertyAccessException) {
-            throw RuntimeException("Failed to construct plugin class instance for $pluginClass. Make sure you have a no-arg constructor!", e)
-        } ?: throw RuntimeException("Failed to load plugin for class $pluginClass")
+            throw PluginInstantiationException("Failed to construct plugin class instance for $pluginClass. Make sure you have a no-arg constructor!", e)
+        } ?: throw PluginInstantiationException("Failed to instantiate plugin for class $pluginClass")
 
-        val metadata = pluginClass.getAnnotation(Plugin::class.java)
+        val metadata = pluginClass.getAnnotation(Plugin::class.java) ?: throw RuntimeException("Failed to load plugin of class $pluginClass - missing @Plugin annotation. This should not be possible!")
         val lowerDomain = metadata.domain.toLowerCase()
 
         if (plugins.containsKey(lowerDomain)) {
-            throw RuntimeException("The domain name '$lowerDomain' is already being used by another plugin")
+            throw DuplicateDomainException("The domain name '$lowerDomain' is already being used by another plugin!")
         }
 
         val dependents = mutableListOf<String>()
@@ -95,6 +103,8 @@ object PluginLoader {
 
     /**
      * Loads all plugins onto the classpath from their respective JARs.
+     *
+     * @param location The location as a path to load JAR files from.
      */
     fun loadJARsFrom(location: String) {
         logger.info("Beginning JAR loading")
@@ -120,6 +130,11 @@ object PluginLoader {
         logger.info("Finished JAR loading in ${System.currentTimeMillis() - start}ms")
     }
 
+    /**
+     * Checks all plugins and their dependencies to ensure that there are no missing or circular dependencies.
+     *
+     * @throws CircularDependencyException if a plugin has a circular dependency issue.
+     */
     private fun checkPluginDependencies() {
         val toRemove = mutableListOf<String>()
         plugins.forEach { (pluginDomain, pluginContainer) ->
@@ -147,7 +162,7 @@ object PluginLoader {
                 val result = validateDependencyTree(container.metadata.domain.toLowerCase(), container)
 
                 if (result) {
-                    throw RuntimeException("Circular dependency detected for plugin with domain name ${container.metadata.domain}!")
+                    throw CircularDependencyException("Circular dependency detected for plugin with domain name ${container.metadata.domain}!")
                 }
             }
         }
@@ -176,6 +191,9 @@ object PluginLoader {
         return false
     }
 
+    /**
+     * Initializes all plugins that were instantiated and stored in the [PluginLoader].
+     */
     private fun initializePlugins() = runBlocking {
         logger.info("Initializing all plugins...")
         val start = System.currentTimeMillis()
