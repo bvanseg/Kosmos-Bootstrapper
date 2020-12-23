@@ -1,5 +1,6 @@
 package com.kosmos.engine
 
+import bvanseg.kotlincommons.any.getLogger
 import bvanseg.kotlincommons.evenir.bus.EventBus
 import com.kosmos.bootstrapper.event.PluginInitializationEvent
 import com.kosmos.bootstrapper.plugin.Plugin
@@ -32,7 +33,16 @@ class KosmosEngine {
      */
     val EVENT_BUS = EventBus()
 
+    /**
+     * Primary logger for the game engine.
+     */
+    val LOGGER = getLogger()
+
     private fun init(event: PluginInitializationEvent) {
+        LOGGER.info("Initializing Kosmos Engine...")
+        val start = System.currentTimeMillis()
         instance = this // Allows plugins dependent on the engine to grab the engine instance.
+
+        LOGGER.info("Finished initializing Kosmos Engine in ${System.currentTimeMillis() - start}ms")
     }
 }
