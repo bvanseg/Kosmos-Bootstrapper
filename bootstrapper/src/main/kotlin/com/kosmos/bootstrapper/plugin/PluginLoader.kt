@@ -137,20 +137,41 @@ object PluginLoader {
             plugins.remove(it)
         }
 
-        // For every plugin, check for duplicates in dependency and dependents.
-        plugins.forEach { (_, plugin) ->
-            plugin.metadata.dependencies.forEach { dependencyDomain ->
-                if (plugin.dependents.contains(dependencyDomain)) {
-                    throw RuntimeException("Circular dependency detected: ${plugin.metadata.domain} <-> $dependencyDomain")
-                }
-            }
+        for (plugin in plugins) {
 
-            plugin.dependents.forEach { dependentDomain ->
-                if (plugin.metadata.dependencies.contains(dependentDomain)) {
-                    throw RuntimeException("Circular dependency detected: ${plugin.metadata.domain} <-> $dependentDomain")
+            val container = plugin.value
+
+            if (container.metadata.dependencies.isNotEmpty()) {
+                val result = validateDependencyTree(container.metadata.domain, container)
+
+                if (result) {
+                    throw RuntimeException("Circular dependency detected for plugin with domain name ${container.metadata.domain}!")
                 }
             }
         }
+    }
+
+    /**
+     * Takes in a [PluginContainer] and recursively travels up its dependencies, verifying that this plugin isn't a dependency
+     * for any of its own dependencies (circular dependency).
+     */
+    private fun validateDependencyTree(rootDomain: String, pluginContainer: PluginContainer): Boolean {
+
+        for (dependency in pluginContainer.metadata.dependencies) {
+            val container = plugins[dependency.toLowerCase()] ?: continue
+
+            if (rootDomain == container.metadata.domain) {
+                return true
+            }
+
+            val result = validateDependencyTree(rootDomain, container)
+
+            if (result) {
+                return true
+            }
+        }
+
+        return false
     }
 
     private fun initializePlugins() = runBlocking {
