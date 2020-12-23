@@ -196,7 +196,7 @@ object PluginLoader {
                         }
                     }
 
-                    EVENT_BUS.fireForListener(pluginEntry.value, event)
+                    EVENT_BUS.fireForListener(pluginEntry.value.plugin, event)
                     resolvedPlugins.add(pluginEntry.key)
                 } catch (e: Exception) {
                     e.printStackTrace()
