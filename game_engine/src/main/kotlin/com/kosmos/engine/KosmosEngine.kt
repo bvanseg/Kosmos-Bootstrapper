@@ -31,18 +31,18 @@ class KosmosEngine {
     /**
      * Primary event bus for the game engine.
      */
-    val EVENT_BUS = EventBus()
+    val eventBus = EventBus()
 
     /**
      * Primary logger for the game engine.
      */
-    val LOGGER = getLogger()
+    val logger = getLogger()
 
     private fun init(event: PluginInitializationEvent) {
-        LOGGER.info("Initializing Kosmos Engine...")
+        logger.info("Initializing Kosmos Engine...")
         val start = System.currentTimeMillis()
         instance = this // Allows plugins dependent on the engine to grab the engine instance.
 
-        LOGGER.info("Finished initializing Kosmos Engine in ${System.currentTimeMillis() - start}ms")
+        logger.info("Finished initializing Kosmos Engine in ${System.currentTimeMillis() - start}ms")
     }
 }

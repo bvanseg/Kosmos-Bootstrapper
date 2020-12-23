@@ -17,15 +17,15 @@ abstract class StateManager {
 
         val engine = KosmosEngine.getInstance()
 
-        engine.EVENT_BUS.fire(StateDisposeEvent.PRE(activeState))
+        engine.eventBus.fire(StateDisposeEvent.PRE(activeState))
         activeState.dispose()
-        engine.EVENT_BUS.fire(StateDisposeEvent.POST(activeState))
+        engine.eventBus.fire(StateDisposeEvent.POST(activeState))
 
         activeState = state
 
-        engine.EVENT_BUS.fire(StateInitEvent.PRE(state))
+        engine.eventBus.fire(StateInitEvent.PRE(state))
         activeState.init()
-        engine.EVENT_BUS.fire(StateInitEvent.POST(state))
+        engine.eventBus.fire(StateInitEvent.POST(state))
 
     }
 }
