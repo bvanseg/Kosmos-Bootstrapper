@@ -1,3 +1,5 @@
+package com.kosmos.engine
+
 import com.kosmos.bootstrapper.event.PluginInitializationEvent
 import com.kosmos.bootstrapper.plugin.Plugin
 import com.kosmos.bootstrapper.plugin.PluginLoader
