@@ -162,25 +162,29 @@ object PluginLoader {
 
         plugins.forEach { pluginEntry ->
             jobs.add(GlobalScope.launch {
-                val metadata = pluginEntry.value.metadata
+                try {
+                    val metadata = pluginEntry.value.metadata
 
-                if (metadata.dependencies.isNotEmpty()) {
-                    while (true) {
-                        if (metadata.dependencies.all { resolvedPlugins.contains(it) }) {
-                            break
-                        } else {
-                            delay(50)
+                    if (metadata.dependencies.isNotEmpty()) {
+                        while (true) {
+                            if (metadata.dependencies.all { resolvedPlugins.contains(it) }) {
+                                break
+                            } else {
+                                delay(50)
+                            }
                         }
                     }
-                }
 
-                EVENT_BUS.fireForListener(pluginEntry.value, event)
-                resolvedPlugins.add(pluginEntry.key)
+                    EVENT_BUS.fireForListener(pluginEntry.value, event)
+                    resolvedPlugins.add(pluginEntry.key)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             })
         }
 
         jobs.joinAll()
     }
 
-    fun getPlugin(domain: String) = plugins.get(domain.toLowerCase())
+    fun getPlugin(domain: String) = plugins[domain.toLowerCase()]
 }
