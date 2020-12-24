@@ -12,9 +12,6 @@ data class MessageHeader(
     val messageID: Int,
     val messageSize: Int
 ) {
-    companion object {
-        const val HEADER_SIZE = Long.SIZE_BYTES * 2 + Int.SIZE_BYTES * 2
-    }
 
     fun write(buffer: ByteBuf) {
         buffer.writeLong(uuid.mostSignificantBits)

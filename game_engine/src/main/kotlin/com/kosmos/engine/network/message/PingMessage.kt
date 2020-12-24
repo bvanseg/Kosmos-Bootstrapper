@@ -26,10 +26,10 @@ class PingMessage: Message() {
         if (channel.hasAttr(sideAttributeKey)) {
             when (channel.attr(sideAttributeKey).get()!!) {
                 Side.CLIENT -> {
-                    println("Client side received the ping!")
+                    logger.debug("Ping: ${System.currentTimeMillis() - timestamp}ms")
                 }
                 Side.SERVER -> {
-                    println("Server side received the ping!")
+                    logger.debug("Server side received ping from client ${channel.id().asLongText()}. Echoing...")
                     channel.writeAndFlush(this)
                 }
             }
