@@ -24,7 +24,7 @@ import kotlin.reflect.jvm.jvmName
  * @author Boston Vanseghi
  * @since 1.0.0
  */
-object PluginLoader {
+object PluginManager {
 
     private val logger = getLogger()
 
@@ -245,7 +245,7 @@ object PluginLoader {
     }
 
     /**
-     * Initializes all plugins that were instantiated and stored in the [PluginLoader].
+     * Initializes all plugins that were instantiated and stored in the [PluginManager].
      */
     private fun initializePlugins() = runBlocking {
         logger.info("Initializing all plugins...")

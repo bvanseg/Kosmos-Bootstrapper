@@ -1,6 +1,6 @@
 package com.kosmos.bootstrapper
 
-import com.kosmos.bootstrapper.plugin.PluginLoader
+import com.kosmos.bootstrapper.plugin.PluginManager
 
 object Bootstrapper {
 
@@ -8,6 +8,6 @@ object Bootstrapper {
     fun main(vararg args: String) {
         val location = args.firstOrNull() ?: ""
 
-        PluginLoader.processPluginsAt(location)
+        PluginManager.processPluginsAt(location)
     }
 }

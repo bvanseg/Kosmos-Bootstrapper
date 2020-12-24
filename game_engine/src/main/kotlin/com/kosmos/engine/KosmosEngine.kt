@@ -4,7 +4,7 @@ import bvanseg.kotlincommons.any.getLogger
 import bvanseg.kotlincommons.evenir.bus.EventBus
 import com.kosmos.bootstrapper.event.PluginInitializationEvent
 import com.kosmos.bootstrapper.plugin.Plugin
-import com.kosmos.bootstrapper.plugin.PluginLoader
+import com.kosmos.bootstrapper.plugin.PluginManager
 
 /**
  * @author Boston Vanseghi
@@ -19,7 +19,7 @@ import com.kosmos.bootstrapper.plugin.PluginLoader
 class KosmosEngine {
 
     init {
-        PluginLoader.EVENT_BUS.addListener(this)
+        PluginManager.EVENT_BUS.addListener(this)
     }
 
     companion object {

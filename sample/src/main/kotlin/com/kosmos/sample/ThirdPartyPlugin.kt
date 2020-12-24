@@ -4,7 +4,7 @@ import bvanseg.kotlincommons.any.getLogger
 import bvanseg.kotlincommons.evenir.annotation.SubscribeEvent
 import com.kosmos.bootstrapper.event.PluginInitializationEvent
 import com.kosmos.bootstrapper.plugin.Plugin
-import com.kosmos.bootstrapper.plugin.PluginLoader
+import com.kosmos.bootstrapper.plugin.PluginManager
 
 /**
  * @author Boston Vanseghi
@@ -16,7 +16,7 @@ class ThirdPartyPlugin {
     private val logger = getLogger()
 
     init {
-        PluginLoader.EVENT_BUS.addListener(this)
+        PluginManager.EVENT_BUS.addListener(this)
     }
 
     @SubscribeEvent
