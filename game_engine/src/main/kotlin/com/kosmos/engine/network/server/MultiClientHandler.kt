@@ -3,6 +3,7 @@ package com.kosmos.engine.network.server
 import bvanseg.kotlincommons.any.getLogger
 import com.kosmos.engine.network.Side
 import com.kosmos.engine.network.message.Message
+import com.kosmos.engine.network.message.impl.ClientInitMessage
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.util.AttributeKey
@@ -23,26 +24,33 @@ class MultiClientHandler: SimpleChannelInboundHandler<Message>() {
      * Fired when a client connects.
      */
     override fun channelActive(ctx: ChannelHandlerContext) {
-        logger.info("Client connected: ${ctx.channel().id().asLongText()}")
 
-        // Set a UUID for the client
-        val uuidAttributeKey = AttributeKey.newInstance<UUID>("uuid")
+        // Set a UUID for the client.
+        val uuidAttributeKey = AttributeKey.valueOf<UUID>("uuid")
         ctx.channel().attr(uuidAttributeKey).set(UUID.randomUUID())
+        val clientUUID = ctx.channel().attr(uuidAttributeKey).get()
 
-        // Set the side that the channel knows
-        val sideAttributeKey = AttributeKey.newInstance<Side>("side")
+        logger.info("Client connected: $clientUUID")
+
+        // Set the side that the channel knows.
+        val sideAttributeKey = AttributeKey.valueOf<Side>("side")
         ctx.channel().attr(sideAttributeKey).set(Side.SERVER)
 
+        // Track the client within our map.
         val dummyClient = DummyClient(ctx.channel())
+        clients[clientUUID] = dummyClient
 
-        clients[ctx.channel().attr(uuidAttributeKey).get()] = dummyClient
+        // Initialize the client with the UUID we assign it.
+        val clientInitMessage = ClientInitMessage()
+        clientInitMessage.uuid = clientUUID
+        ctx.writeAndFlush(clientInitMessage)
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext) {
-        logger.info("Client disconnected: ${ctx.channel().id().asLongText()}")
-
-        val uuidAttributeKey = AttributeKey.newInstance<UUID>("uuid")
+        val uuidAttributeKey = AttributeKey.valueOf<UUID>("uuid")
         val uuid = ctx.channel().attr(uuidAttributeKey).get()
+
+        logger.info("Client disconnected: $uuid")
 
         clients.remove(uuid)
     }

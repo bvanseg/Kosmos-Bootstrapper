@@ -10,7 +10,7 @@ import io.netty.util.AttributeKey
 class ClientHandler : SimpleChannelInboundHandler<Message>() {
 
     override fun channelActive(ctx: ChannelHandlerContext) {
-        val sideAttribute = AttributeKey.newInstance<Side>("side")
+        val sideAttribute = AttributeKey.valueOf<Side>("side")
         ctx.channel().attr(sideAttribute).set(Side.CLIENT)
     }
 
