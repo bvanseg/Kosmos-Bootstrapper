@@ -3,7 +3,6 @@ package com.kosmos.engine.network.server
 import com.kosmos.engine.network.Side
 import com.kosmos.engine.network.message.Message
 import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelId
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.util.AttributeKey
 import java.util.*
