@@ -9,6 +9,10 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ReplayingDecoder
 import java.util.*
 
+/**
+ * @author Boston Vanseghi
+ * @since 1.0.0
+ */
 class MessageDecoder: ReplayingDecoder<Message>() {
 
     val logger = getLogger()
@@ -31,6 +35,8 @@ class MessageDecoder: ReplayingDecoder<Message>() {
             logger.warn("Failed to create message instance from factory entry for message with id ${messageHeader.messageID}")
             return
         }
+
+        message.header = messageHeader
 
         message.read(input)
 

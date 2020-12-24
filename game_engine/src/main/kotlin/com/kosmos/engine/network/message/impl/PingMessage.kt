@@ -4,7 +4,6 @@ import com.kosmos.engine.network.Side
 import com.kosmos.engine.network.message.Message
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
-import io.netty.util.AttributeKey
 
 /**
  * @author Boston Vanseghi
@@ -23,9 +22,8 @@ class PingMessage: Message() {
     }
 
     override fun handle(channel: Channel) {
-        val sideAttributeKey = AttributeKey.valueOf<Side>("side")
-        if (channel.hasAttr(sideAttributeKey)) {
-            when (channel.attr(sideAttributeKey).get()!!) {
+        getSide(channel)?.let { side ->
+            when (side) {
                 Side.CLIENT -> {
                     logger.debug("Ping: ${System.currentTimeMillis() - timestamp}ms")
                 }
