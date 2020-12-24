@@ -2,6 +2,7 @@ package com.kosmos.engine.network.server
 
 import bvanseg.kotlincommons.any.getLogger
 import com.kosmos.engine.KosmosEngine
+import com.kosmos.engine.event.ServerBindEvent
 import com.kosmos.engine.event.ServerCloseEvent
 import com.kosmos.engine.network.message.Message
 import com.kosmos.engine.network.message.decode.MessageDecoder
@@ -36,6 +37,8 @@ class GameServer: AutoCloseable {
 
 
     fun bind(host: String, port: Int) {
+        val engine = KosmosEngine.getInstance()
+
         try {
             val bootstrap = ServerBootstrap()
 
@@ -53,15 +56,16 @@ class GameServer: AutoCloseable {
                 })
 
             logger.info("Attempting to bind server to $host:$port...")
+            engine.eventBus.fire(ServerBindEvent.PRE())
             val channelFuture: ChannelFuture = bootstrap.bind(InetSocketAddress(host, port)).sync()
             logger.info("Successfully bound server to $host:$port")
 
             channel = channelFuture.channel()
+            engine.eventBus.fire(ServerBindEvent.POST(channel))
 
             // Wait until the server socket is closed.
             channelFuture.channel().closeFuture().sync()
         } finally {
-            val engine = KosmosEngine.getInstance()
 
             bossGroup.shutdownGracefully()
             workerGroup.shutdownGracefully()

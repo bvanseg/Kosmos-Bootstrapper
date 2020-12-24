@@ -3,6 +3,7 @@ package com.kosmos.engine.network.client
 import bvanseg.kotlincommons.any.getLogger
 import com.kosmos.engine.KosmosEngine
 import com.kosmos.engine.event.ClientCloseEvent
+import com.kosmos.engine.event.ClientConnectEvent
 import com.kosmos.engine.network.message.Message
 import com.kosmos.engine.network.message.decode.MessageDecoder
 import com.kosmos.engine.network.message.encode.MessageEncoder
@@ -31,6 +32,8 @@ class GameClient: AutoCloseable {
 
     fun connect(host: String, port: Int) {
 
+        val engine = KosmosEngine.getInstance()
+
         try {
             val bootstrap = Bootstrap()
 
@@ -48,15 +51,16 @@ class GameClient: AutoCloseable {
                 })
 
             logger.info("Attempting to connect client to $host:$port...")
+            engine.eventBus.fire(ClientConnectEvent.PRE())
             val channelFuture: ChannelFuture = bootstrap.connect(InetSocketAddress(host, port)).sync()
             logger.info("Client successfully connected to $host:$port")
 
             channel = channelFuture.channel()
+            engine.eventBus.fire(ClientConnectEvent.POST(channel))
 
             // Wait until the server socket is closed.
             channelFuture.channel().closeFuture().sync()
         } finally {
-            val engine = KosmosEngine.getInstance()
             group.shutdownGracefully()
             engine.eventBus.fire(ClientCloseEvent.POST(channel))
         }

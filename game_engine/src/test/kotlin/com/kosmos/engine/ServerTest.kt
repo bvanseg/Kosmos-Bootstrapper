@@ -9,7 +9,11 @@ import com.kosmos.engine.network.server.GameServer
  */
 
 fun main() {
-    KosmosEngine().init(PluginInitializationEvent())
+    val engine = KosmosEngine()
+    engine.init(PluginInitializationEvent())
+
+    engine.eventBus.addListener(ServerListener)
+
     val server = GameServer()
     server.bind("127.0.0.1", 2323)
 }
