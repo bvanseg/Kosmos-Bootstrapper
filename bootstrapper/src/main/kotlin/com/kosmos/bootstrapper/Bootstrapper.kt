@@ -2,14 +2,12 @@ package com.kosmos.bootstrapper
 
 import com.kosmos.bootstrapper.plugin.PluginLoader
 
-internal class Bootstrapper {
+object Bootstrapper {
 
-    companion object {
+    @JvmStatic
+    fun main(vararg args: String) {
+        val location = args.firstOrNull() ?: ""
 
-        @JvmStatic
-        fun main(vararg args: String) {
-            val location = args.firstOrNull() ?: ""
-            PluginLoader.processPluginsAt(location)
-        }
+        PluginLoader.processPluginsAt(location)
     }
 }

@@ -1,0 +1,10 @@
+{
+  "domain": "zerra",
+  "name": "Zerra",
+  "version": "1.0.0",
+  "authors": [
+    "Boston Vanseghi",
+    "Ocelot5836"
+  ],
+  "description": "A game built on top of the Kosmos Engine."
+}

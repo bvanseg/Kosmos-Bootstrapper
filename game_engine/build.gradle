@@ -2,5 +2,5 @@ group 'com.kosmos.engine'
 version '1.0.0'
 
 dependencies {
-    implementation project(':bootstrapper')
+    api project(':bootstrapper')
 }
