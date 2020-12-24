@@ -6,7 +6,7 @@ import com.kosmos.bootstrapper.event.PluginInitializationEvent
 import com.kosmos.bootstrapper.plugin.Plugin
 import com.kosmos.bootstrapper.plugin.PluginManager
 import com.kosmos.engine.network.message.Message
-import com.kosmos.engine.network.message.PingMessage
+import com.kosmos.engine.network.message.impl.PingMessage
 import com.kosmos.engine.registry.RegistryManager
 
 /**

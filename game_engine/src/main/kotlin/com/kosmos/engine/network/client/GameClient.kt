@@ -1,7 +1,6 @@
 package com.kosmos.engine.network.client
 
 import bvanseg.kotlincommons.any.getLogger
-import com.kosmos.engine.network.message.PingMessage
 import com.kosmos.engine.network.message.decode.MessageDecoder
 import com.kosmos.engine.network.message.encode.MessageEncoder
 import io.netty.bootstrap.Bootstrap

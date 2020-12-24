@@ -1,6 +1,7 @@
-package com.kosmos.engine.network.message
+package com.kosmos.engine.network.message.impl
 
 import com.kosmos.engine.network.Side
+import com.kosmos.engine.network.message.Message
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.util.AttributeKey
