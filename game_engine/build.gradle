@@ -3,4 +3,7 @@ version '1.0.0'
 
 dependencies {
     api project(':bootstrapper')
+
+    // https://mvnrepository.com/artifact/io.netty/netty-all
+    implementation group: 'io.netty', name: 'netty-all', version: '4.1.53.Final'
 }
