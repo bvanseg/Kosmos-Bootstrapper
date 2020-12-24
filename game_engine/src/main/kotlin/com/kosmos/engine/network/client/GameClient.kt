@@ -45,7 +45,7 @@ class GameClient {
             println("Chat Server started. Ready to accept chat clients.")
 
             while(true) {
-                if (System.currentTimeMillis() % 20 == 0L) {
+                if (System.currentTimeMillis() % 1000L == 0L) {
                     val channel: Channel = channelFuture.sync().channel()
                     channel.writeAndFlush(PingMessage())
                 }

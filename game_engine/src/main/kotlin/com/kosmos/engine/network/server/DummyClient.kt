@@ -1,5 +1,6 @@
 package com.kosmos.engine.network.server
 
+import io.netty.channel.Channel
 import java.util.*
 
 /**
@@ -10,6 +11,6 @@ import java.util.*
  * @author Boston Vanseghi
  * @since 1.0.0
  */
-class DummyClient(val uuid: UUID) {
+class DummyClient(val channel: Channel) {
 
 }
