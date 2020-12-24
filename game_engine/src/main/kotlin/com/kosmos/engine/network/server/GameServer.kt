@@ -18,7 +18,7 @@ import java.util.*
  * @author Boston Vanseghi
  * @since 1.0.0
  */
-class GameServer {
+class GameServer: AutoCloseable {
 
     private lateinit var channel: Channel
 
@@ -99,5 +99,10 @@ class GameServer {
         multiClientHandler.clients.forEach { (_, client) ->
             client.channel.writeAndFlush(message)
         }
+    }
+
+    override fun close() {
+        bossGroup.shutdownGracefully()
+        workerGroup.shutdownGracefully()
     }
 }

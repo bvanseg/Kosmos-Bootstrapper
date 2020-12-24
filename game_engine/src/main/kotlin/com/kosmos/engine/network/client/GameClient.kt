@@ -18,7 +18,7 @@ import java.util.*
  * @author Boston Vanseghi
  * @since 1.0.0
  */
-class GameClient {
+class GameClient: AutoCloseable {
 
     private lateinit var channel: Channel
 
@@ -29,8 +29,6 @@ class GameClient {
     private val clientHandler = ClientHandler()
 
     fun connect(host: String, port: Int) {
-
-        val scanner = Scanner(System.`in`)
 
         try {
             val bootstrap = Bootstrap()
@@ -63,5 +61,9 @@ class GameClient {
 
     fun sendToServer(message: Message) {
         channel.writeAndFlush(message)
+    }
+
+    override fun close() {
+        group.shutdownGracefully()
     }
 }
