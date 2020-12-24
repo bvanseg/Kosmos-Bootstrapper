@@ -1,5 +1,6 @@
 package com.kosmos.engine.network.server
 
+import bvanseg.kotlincommons.any.getLogger
 import com.kosmos.engine.network.Side
 import com.kosmos.engine.network.message.Message
 import io.netty.channel.ChannelHandlerContext
@@ -15,23 +16,34 @@ class MultiClientHandler: SimpleChannelInboundHandler<Message>() {
 
     val clients = hashMapOf<UUID, DummyClient>()
 
+    val logger = getLogger()
+
     /**
      * Fired when a client connects.
      */
     override fun channelActive(ctx: ChannelHandlerContext) {
-        println("Client connected!")
+        logger.info("Client connected: ${ctx.channel().id().asLongText()}")
 
         // Set a UUID for the client
-        val uuidAttribute = AttributeKey.newInstance<UUID>("uuid")
-        ctx.channel().attr(uuidAttribute).set(UUID.randomUUID())
+        val uuidAttributeKey = AttributeKey.newInstance<UUID>("uuid")
+        ctx.channel().attr(uuidAttributeKey).set(UUID.randomUUID())
 
         // Set the side that the channel knows
-        val sideAttribute = AttributeKey.newInstance<Side>("side")
-        ctx.channel().attr(sideAttribute).set(Side.SERVER)
+        val sideAttributeKey = AttributeKey.newInstance<Side>("side")
+        ctx.channel().attr(sideAttributeKey).set(Side.SERVER)
 
         val dummyClient = DummyClient(ctx.channel())
 
-        clients[ctx.channel().attr(uuidAttribute).get()] = dummyClient
+        clients[ctx.channel().attr(uuidAttributeKey).get()] = dummyClient
+    }
+
+    override fun channelInactive(ctx: ChannelHandlerContext) {
+        logger.info("Client disconnected: ${ctx.channel().id().asLongText()}")
+
+        val uuidAttributeKey = AttributeKey.newInstance<UUID>("uuid")
+        val uuid = ctx.channel().attr(uuidAttributeKey).get()
+
+        clients.remove(uuid)
     }
 
     /**
