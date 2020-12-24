@@ -1,6 +1,8 @@
 package com.kosmos.engine.network.server
 
 import bvanseg.kotlincommons.any.getLogger
+import com.kosmos.engine.KosmosEngine
+import com.kosmos.engine.event.ServerCloseEvent
 import com.kosmos.engine.network.message.Message
 import com.kosmos.engine.network.message.decode.MessageDecoder
 import com.kosmos.engine.network.message.encode.MessageEncoder
@@ -59,8 +61,11 @@ class GameServer: AutoCloseable {
             // Wait until the server socket is closed.
             channelFuture.channel().closeFuture().sync()
         } finally {
+            val engine = KosmosEngine.getInstance()
+
             bossGroup.shutdownGracefully()
             workerGroup.shutdownGracefully()
+            engine.eventBus.fire(ServerCloseEvent.POST(channel))
         }
     }
 
@@ -102,7 +107,12 @@ class GameServer: AutoCloseable {
     }
 
     override fun close() {
+        val engine = KosmosEngine.getInstance()
+
+        engine.eventBus.fire(ServerCloseEvent.PRE(channel))
+        channel.close()
         bossGroup.shutdownGracefully()
         workerGroup.shutdownGracefully()
+        engine.eventBus.fire(ServerCloseEvent.POST(channel))
     }
 }

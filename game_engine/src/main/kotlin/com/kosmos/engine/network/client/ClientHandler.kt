@@ -1,5 +1,7 @@
 package com.kosmos.engine.network.client
 
+import com.kosmos.engine.KosmosEngine
+import com.kosmos.engine.event.ClientHandleMessageEvent
 import com.kosmos.engine.network.Side
 import com.kosmos.engine.network.message.Message
 import io.netty.channel.ChannelHandlerContext
@@ -15,6 +17,10 @@ class ClientHandler : SimpleChannelInboundHandler<Message>() {
     }
 
     override fun channelRead0(ctx: ChannelHandlerContext, msg: Message) {
+        val engine = KosmosEngine.getInstance()
+
+        engine.eventBus.fire(ClientHandleMessageEvent.PRE(ctx.channel(), msg))
         msg.handle(ctx.channel())
+        engine.eventBus.fire(ClientHandleMessageEvent.POST(ctx.channel(), msg))
     }
 }

@@ -1,6 +1,8 @@
 package com.kosmos.engine.network.server
 
 import bvanseg.kotlincommons.any.getLogger
+import com.kosmos.engine.KosmosEngine
+import com.kosmos.engine.event.ServerHandleMessageEvent
 import com.kosmos.engine.network.Side
 import com.kosmos.engine.network.message.Message
 import com.kosmos.engine.network.message.impl.ClientInitMessage
@@ -59,7 +61,11 @@ class MultiClientHandler: SimpleChannelInboundHandler<Message>() {
      * Fired when a message is received from the client.
      */
     override fun channelRead0(ctx: ChannelHandlerContext, msg: Message) {
+        val engine = KosmosEngine.getInstance()
+
+        engine.eventBus.fire(ServerHandleMessageEvent.PRE(ctx.channel(), msg))
         msg.handle(ctx.channel())
+        engine.eventBus.fire(ServerHandleMessageEvent.POST(ctx.channel(), msg))
     }
 
     /**

@@ -1,6 +1,8 @@
 package com.kosmos.engine.network.client
 
 import bvanseg.kotlincommons.any.getLogger
+import com.kosmos.engine.KosmosEngine
+import com.kosmos.engine.event.ClientCloseEvent
 import com.kosmos.engine.network.message.Message
 import com.kosmos.engine.network.message.decode.MessageDecoder
 import com.kosmos.engine.network.message.encode.MessageEncoder
@@ -12,7 +14,6 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import java.net.InetSocketAddress
-import java.util.*
 
 /**
  * @author Boston Vanseghi
@@ -55,7 +56,9 @@ class GameClient: AutoCloseable {
             // Wait until the server socket is closed.
             channelFuture.channel().closeFuture().sync()
         } finally {
+            val engine = KosmosEngine.getInstance()
             group.shutdownGracefully()
+            engine.eventBus.fire(ClientCloseEvent.POST(channel))
         }
     }
 
@@ -64,6 +67,11 @@ class GameClient: AutoCloseable {
     }
 
     override fun close() {
+        val engine = KosmosEngine.getInstance()
+
+        engine.eventBus.fire(ClientCloseEvent.PRE(channel))
+        channel.close()
         group.shutdownGracefully()
+        engine.eventBus.fire(ClientCloseEvent.POST(channel))
     }
 }
