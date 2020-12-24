@@ -14,9 +14,9 @@ import java.util.*
  */
 class MultiClientHandler: SimpleChannelInboundHandler<Message>() {
 
-    val clients = hashMapOf<UUID, DummyClient>()
+    private val clients = hashMapOf<UUID, DummyClient>()
 
-    val logger = getLogger()
+    private val logger = getLogger()
 
     /**
      * Fired when a client connects.
@@ -57,6 +57,7 @@ class MultiClientHandler: SimpleChannelInboundHandler<Message>() {
      * Handles exceptions from the client.
      */
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+        cause.printStackTrace()
         ctx.close()
     }
 }

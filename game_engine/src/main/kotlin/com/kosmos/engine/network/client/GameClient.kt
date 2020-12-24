@@ -1,5 +1,6 @@
 package com.kosmos.engine.network.client
 
+import bvanseg.kotlincommons.any.getLogger
 import com.kosmos.engine.network.message.PingMessage
 import com.kosmos.engine.network.message.decode.MessageDecoder
 import com.kosmos.engine.network.message.encode.MessageEncoder
@@ -19,7 +20,11 @@ import java.util.*
  */
 class GameClient {
 
+    private lateinit var channel: Channel
+
     private val group = NioEventLoopGroup()
+
+    private val logger = getLogger()
 
     fun connect(host: String, port: Int) {
 
@@ -41,15 +46,11 @@ class GameClient {
 
                 })
 
+            logger.info("Attempting to connect client to $host:$port...")
             val channelFuture: ChannelFuture = bootstrap.connect(InetSocketAddress(host, port)).sync()
-            println("Chat Server started. Ready to accept chat clients.")
+            logger.info("Client successfully connected to $host:$port")
 
-            while(true) {
-                if (System.currentTimeMillis() % 1000L == 0L) {
-                    val channel: Channel = channelFuture.sync().channel()
-                    channel.writeAndFlush(PingMessage())
-                }
-            }
+            channel = channelFuture.channel()
 
             // Wait until the server socket is closed.
             channelFuture.channel().closeFuture().sync()
