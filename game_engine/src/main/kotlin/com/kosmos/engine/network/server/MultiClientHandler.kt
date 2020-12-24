@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class MultiClientHandler: SimpleChannelInboundHandler<Message>() {
 
-    private val clients = ConcurrentHashMap<UUID, DummyClient>()
+    val clients = ConcurrentHashMap<UUID, DummyClient>()
 
     private val logger = getLogger()
 

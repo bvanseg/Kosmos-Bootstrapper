@@ -1,6 +1,7 @@
 package com.kosmos.engine.network.client
 
 import bvanseg.kotlincommons.any.getLogger
+import com.kosmos.engine.network.message.Message
 import com.kosmos.engine.network.message.decode.MessageDecoder
 import com.kosmos.engine.network.message.encode.MessageEncoder
 import io.netty.bootstrap.Bootstrap
@@ -25,6 +26,8 @@ class GameClient {
 
     private val logger = getLogger()
 
+    private val clientHandler = ClientHandler()
+
     fun connect(host: String, port: Int) {
 
         val scanner = Scanner(System.`in`)
@@ -40,7 +43,7 @@ class GameClient {
                         val pipeline = channel.pipeline()
                         pipeline.addLast(MessageDecoder())
                         pipeline.addLast(MessageEncoder())
-                        pipeline.addLast(ClientHandler())
+                        pipeline.addLast(clientHandler)
                     }
 
                 })
@@ -56,5 +59,9 @@ class GameClient {
         } finally {
             group.shutdownGracefully()
         }
+    }
+
+    fun sendToServer(message: Message) {
+        channel.writeAndFlush(message)
     }
 }
