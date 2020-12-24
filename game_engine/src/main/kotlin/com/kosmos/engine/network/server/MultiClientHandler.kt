@@ -7,6 +7,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.util.AttributeKey
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * @author Boston Vanseghi
@@ -14,7 +15,7 @@ import java.util.*
  */
 class MultiClientHandler: SimpleChannelInboundHandler<Message>() {
 
-    private val clients = hashMapOf<UUID, DummyClient>()
+    private val clients = ConcurrentHashMap<UUID, DummyClient>()
 
     private val logger = getLogger()
 
