@@ -1,5 +1,3 @@
-rootProject.name = 'Kosmos'
+rootProject.name = 'Kosmos Bootstrapper'
 include 'bootstrapper'
 include 'sample'
-include 'game_engine'
-include 'game'
