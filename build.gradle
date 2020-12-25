@@ -2,27 +2,24 @@ buildscript {
 
     repositories {
         maven {
-            url 'https://plugins.gradle.org/m2/'
+            url "https://plugins.gradle.org/m2/"
         }
     }
 
     dependencies {
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.21'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$project.kotlinVersion"
     }
 }
 
 plugins {
-    id 'com.github.johnrengelman.shadow' version '4.0.4'
+    id "com.github.johnrengelman.shadow" version "4.0.4"
 }
 
 subprojects {
-    apply plugin: 'org.jetbrains.kotlin.jvm'
-    apply plugin: 'idea'
-    apply plugin: 'java-library'
-    apply plugin: 'kotlin'
-
-    group 'com.kosmos'
-    version '1.0.0'
+    apply plugin: "org.jetbrains.kotlin.jvm"
+    apply plugin: "idea"
+    apply plugin: "java-library"
+    apply plugin: "kotlin"
 
     sourceCompatibility = targetCompatibility = JavaVersion.VERSION_15
 
@@ -36,18 +33,18 @@ subprojects {
 
     dependencies {
         implementation "org.jetbrains.kotlin:kotlin-stdlib"
-        testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
-        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+        testImplementation "org.junit.jupiter:junit-jupiter-api:$project.junitJupiterVersion"
+        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
 
         // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-        implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.3.0-alpha5'
+        implementation "ch.qos.logback:logback-classic:$project.logbackClassicVersion"
 
-        implementation 'com.github.bvanseg:kotlincommons:2.7.0-alpha7'
+        implementation "com.github.bvanseg:kotlincommons:$project.kotlinCommonsVersion"
     }
 
     sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-        test.java.srcDirs += 'src/test/kotlin'
+        main.java.srcDirs += "src/main/kotlin"
+        test.java.srcDirs += "src/test/kotlin"
     }
 
     test {

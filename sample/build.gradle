@@ -1,5 +1,4 @@
 group 'com.kosmos.sample'
-version '1.0.0'
 
 dependencies {
     implementation project(':bootstrapper')

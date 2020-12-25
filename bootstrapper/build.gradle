@@ -1,15 +1,14 @@
-group 'com.kosmos.bootstrapper'
-version '1.0.0'
+group "com.kosmos.bootstrapper"
 
 apply plugin: "maven"
 
 dependencies {
     // https://mvnrepository.com/artifact/io.github.classgraph/classgraph
-    implementation group: 'io.github.classgraph', name: 'classgraph', version: '4.8.90'
+    implementation "io.github.classgraph:classgraph:$project.classgraphVersion"
 
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.12.0'
+    implementation "com.fasterxml.jackson.core:jackson-core:$project.jacksonVersion"
 
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-kotlin
-    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.0"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$project.jacksonVersion"
 }
