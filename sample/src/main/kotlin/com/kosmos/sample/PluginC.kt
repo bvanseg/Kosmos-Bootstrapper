@@ -22,6 +22,5 @@ class PluginC {
     @SubscribeEvent
     private fun init(e: PluginInitializationEvent) {
         logger.debug("Initializing plugin C...")
-        Thread.sleep(200)
     }
 }

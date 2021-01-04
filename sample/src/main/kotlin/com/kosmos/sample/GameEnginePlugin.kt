@@ -22,6 +22,5 @@ class GameEnginePlugin {
     @SubscribeEvent
     private fun init(e: PluginInitializationEvent) {
         logger.debug("Initializing Game Engine plugin...")
-        Thread.sleep(2000)
     }
 }

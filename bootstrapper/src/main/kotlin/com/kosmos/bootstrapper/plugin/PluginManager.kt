@@ -12,6 +12,7 @@ import com.kosmos.bootstrapper.resource.MasterResourceManager
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.Resource
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
@@ -38,6 +39,7 @@ object PluginManager {
         loadJARsFrom(location)
         findPluginsOnClasspath(false)
         checkPluginDependencies()
+        populatePluginDependents()
         fetchPluginMetadata()
         initializePlugins()
     }
@@ -173,6 +175,19 @@ object PluginManager {
         }
     }
 
+    private fun populatePluginDependents() {
+        logger.info("Populating dependents for all plugins...")
+        val start = System.currentTimeMillis()
+        for((domain, pluginContainer) in plugins) {
+            for((dependentDomain, potentialDependent) in plugins) {
+                if(potentialDependent.annotationData.dependencies.contains(domain)) {
+                    pluginContainer.dependents.add(dependentDomain)
+                }
+            }
+        }
+        logger.info("Finished populating dependents for all plugins in ${System.currentTimeMillis() - start}ms")
+    }
+
     /**
      * Takes in a [PluginContainer] and recursively travels up its dependencies, verifying that this plugin isn't a dependency
      * for any of its own dependencies (circular dependency).
@@ -254,25 +269,60 @@ object PluginManager {
         val event = PluginInitializationEvent()
 
         val jobs = hashSetOf<Job>()
-        val resolvedPlugins = hashSetOf<String>()
+        val channels = ConcurrentHashMap<String, Channel<String>>()
 
-        plugins.forEach { pluginEntry ->
-            jobs.add(GlobalScope.launch {
+        plugins.forEach { (domain, pluginContainer) ->
+            // Create a channel for this plugin.
+            val channel = channels.computeIfAbsent(domain) { Channel() }
+
+            jobs.add(launch {
                 try {
-                    val metadata = pluginEntry.value.annotationData
+                    val aData = pluginContainer.annotationData
 
-                    if (metadata.dependencies.isNotEmpty()) {
+                    if (aData.dependencies.isNotEmpty()) {
+                        val dependencyList = aData.dependencies.copyOf().toHashSet()
+
                         while (true) {
-                            if (metadata.dependencies.all { resolvedPlugins.contains(it) }) {
+                            if (channel.isClosedForReceive) {
+                                logger.warn("Channel for plugin with domain '$domain' is closed for receiving when it shouldn't be!")
                                 break
+                            }
+
+                            val loadedDependencyDomain = channel.receive()
+
+                            if (!dependencyList.contains(loadedDependencyDomain)) {
+                                logger.warn("Plugin '$domain' received domain '$loadedDependencyDomain' from channel that is not a dependency!")
                             } else {
-                                delay(50)
+                                dependencyList.remove(loadedDependencyDomain)
+                            }
+
+                            // Break when all dependencies of this plugin have finished loading.
+                            if(dependencyList.isEmpty()) {
+                                break
                             }
                         }
                     }
 
-                    EVENT_BUS.fireForListener(pluginEntry.value.plugin, event)
-                    resolvedPlugins.add(pluginEntry.key)
+                    EVENT_BUS.fireForListener(pluginContainer.plugin, event)
+
+                    // Notify all dependents that this dependency is done initializing.
+                    for(dependentDomain in pluginContainer.dependents) {
+                        val dependentChannel = channels[dependentDomain]
+
+                        if (dependentChannel == null) {
+                            logger.warn("Dependent '$dependentDomain' of dependency '$domain' has a missing channel when it shouldn't!")
+                            continue
+                        }
+
+                        if (dependentChannel.isClosedForSend) {
+                            logger.warn("Channel for dependent '$dependentDomain' of dependency '$domain' is closed for sending when it shouldn't be!")
+                            continue
+                        }
+
+                        dependentChannel.send(domain)
+                    }
+
+                    channel.close()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -280,6 +330,9 @@ object PluginManager {
         }
 
         jobs.joinAll()
+
+        channels.values.forEach { it.close() }
+        channels.clear()
 
         logger.info("Finished initializing all plugins in ${System.currentTimeMillis() - start}ms")
     }
