@@ -1,6 +1,6 @@
 package com.kosmos.bootstrapper.resource
 
-import bvanseg.kotlincommons.any.getLogger
+import bvanseg.kotlincommons.io.logging.getLogger
 import java.util.function.Predicate
 
 /**

@@ -1,8 +1,8 @@
 package com.kosmos.bootstrapper.plugin
 
-import bvanseg.kotlincommons.any.getLogger
-import bvanseg.kotlincommons.evenir.bus.EventBus
-import bvanseg.kotlincommons.javaclass.createNewInstance
+import bvanseg.kotlincommons.io.logging.getLogger
+import bvanseg.kotlincommons.reflect.createInstanceFrom
+import bvanseg.kotlincommons.util.event.EventBus
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.kosmos.bootstrapper.event.PluginInitializationEvent
 import com.kosmos.bootstrapper.exception.CircularDependencyException
@@ -74,7 +74,7 @@ object PluginManager {
         logger.trace("Attempting to instantiate plugin class '${pluginClass.name}'")
 
         val plugin = try {
-            pluginClass.kotlin.objectInstance ?: createNewInstance(pluginClass)
+            pluginClass.kotlin.objectInstance ?: createInstanceFrom(pluginClass)
         } catch(e: NoSuchMethodException) {
             throw PluginInstantiationException("Failed to construct plugin class instance for '$pluginClass'. Make sure you have a no-arg constructor!", e)
         } catch(e: UninitializedPropertyAccessException) {

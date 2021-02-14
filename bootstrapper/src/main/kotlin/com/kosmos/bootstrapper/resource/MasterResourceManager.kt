@@ -1,6 +1,6 @@
 package com.kosmos.bootstrapper.resource
 
-import bvanseg.kotlincommons.bool.ifTrue
+import bvanseg.kotlincommons.util.bool.ifTrue
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
 import java.util.function.Predicate

@@ -1,6 +1,6 @@
 package com.kosmos.bootstrapper.resource
 
-import bvanseg.kotlincommons.number.HashCodeBuilder
+import bvanseg.kotlincommons.util.HashCodeBuilder
 import java.io.File
 import java.io.InputStream
 
@@ -31,6 +31,6 @@ data class ResourceLocation(val resourceManager: ResourceManager, val domain: St
 
     override fun toString(): String = path
 
-    override fun hashCode(): Int = HashCodeBuilder(this).append(path).hashCode()
+    override fun hashCode(): Int = HashCodeBuilder.builder(this::class).append(path).hashCode()
     override fun equals(other: Any?): Boolean = other is ResourceLocation && this.domain == other.domain && this.location == other.location
 }

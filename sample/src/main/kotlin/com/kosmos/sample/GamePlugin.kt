@@ -1,7 +1,7 @@
 package com.kosmos.sample
 
-import bvanseg.kotlincommons.any.getLogger
-import bvanseg.kotlincommons.evenir.annotation.SubscribeEvent
+import bvanseg.kotlincommons.io.logging.getLogger
+import bvanseg.kotlincommons.util.event.SubscribeEvent
 import com.kosmos.bootstrapper.event.PluginInitializationEvent
 import com.kosmos.bootstrapper.plugin.Plugin
 import com.kosmos.bootstrapper.plugin.PluginManager
