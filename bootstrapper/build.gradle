@@ -2,6 +2,8 @@ group "com.kosmos.bootstrapper"
 
 apply plugin: "maven"
 
+project.version = "1.0.0"
+
 dependencies {
     // https://mvnrepository.com/artifact/io.github.classgraph/classgraph
     implementation "io.github.classgraph:classgraph:$project.classgraphVersion"
