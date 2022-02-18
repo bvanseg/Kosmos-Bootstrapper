@@ -1,7 +1,5 @@
 group "com.kosmos.bootstrapper"
 
-apply plugin: "maven"
-
 project.version = "1.0.0"
 
 dependencies {
