@@ -1,8 +1,6 @@
 package com.kosmos.bootstrapper.resource
 
-import bvanseg.kotlincommons.util.bool.ifTrue
-import io.github.classgraph.ClassGraph
-import io.github.classgraph.ScanResult
+import java.util.*
 import java.util.function.Predicate
 
 /**
@@ -13,28 +11,12 @@ object MasterResourceManager : ResourceManager("", "master") {
 
     private val resourceManagers = hashMapOf<String, ResourceManager>()
 
-    private var scanInitialized = false
-
-    lateinit var resources: ScanResult
-
     init {
         resourceManagers[domain] = this
     }
 
-    fun scanResources(forceScan: Boolean = false, classGraphSupplier: ClassGraph? = null) {
-        logger.info("Scanning all resources...")
-        val start = System.currentTimeMillis()
-        if (!scanInitialized || forceScan) {
-            scanInitialized = true
-            resources = (classGraphSupplier ?: ClassGraph().enableAllInfo()).scan()
-        }
-        logger.info("Resource scan finished in ${System.currentTimeMillis() - start}ms")
-    }
-
-    private fun close() = scanInitialized.ifTrue { resources.close() }
-
     fun createResourceManager(root: String, domain: String): ResourceManager {
-        val lowerDomain = domain.toLowerCase()
+        val lowerDomain = domain.lowercase(Locale.getDefault())
 
         if (resourceManagers[lowerDomain] != null) {
             throw IllegalStateException("Attempted to register a domain that already exists: $domain")
@@ -47,22 +29,12 @@ object MasterResourceManager : ResourceManager("", "master") {
         return manager
     }
 
-    fun getAllResourceLocations(): Collection<ResourceLocation> {
-        val locations = HashSet<ResourceLocation>()
-        resourceManagers.values.forEach { locations.addAll(it.getResourceLocations()) }
-        return locations
+    fun getAllResourceLocations(predicate: Predicate<String> = Predicate { true }): Collection<ResourceLocation> {
+        return resourceManagers.values.flatMap { it.getResourceLocations(predicate) }
     }
 
-    fun getAllResourceLocations(predicate: Predicate<String>): Collection<ResourceLocation> {
-        val locations = HashSet<ResourceLocation>()
-        resourceManagers.values.forEach { locations.addAll(it.getResourceLocations(predicate)) }
-        return locations
-    }
-
-    fun getResourceManager(domain: String) = resourceManagers[domain.toLowerCase()]
+    fun getResourceManager(domain: String) = resourceManagers[domain.lowercase(Locale.getDefault())]
     fun getAllResourceManagers(): Collection<ResourceManager> = resourceManagers.values
 
     fun createResourceLocation(domain: String, location: String) = ResourceLocation(this, domain, location)
-    // This doesn't make any sense? Why should you be able to access files under another manager if it isn't "ours"
-//    fun createResourceLocation(root: String, domain: String, location: String) = ResourceLocation(this, root + domain, location)
 }

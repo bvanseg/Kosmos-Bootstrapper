@@ -6,4 +6,12 @@ package com.kosmos.bootstrapper.plugin
  * @author Boston Vanseghi
  * @since 1.0.0
  */
-data class PluginContainer(val plugin: Any, val pluginClass: Class<*>, val annotationData: Plugin, val dependents: MutableList<String>, var metadata: PluginMetadata? = null)
+data class PluginContainer(
+    val plugin: Any,
+    val pluginClass: Class<*>,
+    val annotationData: Plugin,
+    internal val dependents: HashSet<String> = hashSetOf(),
+    var metadata: PluginMetadata? = null
+) {
+    fun getDependentPlugins(): Set<String> = dependents
+}
