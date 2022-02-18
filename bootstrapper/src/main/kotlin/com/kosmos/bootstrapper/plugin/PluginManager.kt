@@ -11,5 +11,5 @@ import java.util.*
 object PluginManager {
     val EVENT_BUS = EventBus()
 
-    fun getPlugin(domain: String) = PluginLoader.pluginContainersByDomain[domain.lowercase(Locale.getDefault())]
+    fun getPluginContainer(domain: String) = PluginLoader.pluginContainersByDomain[domain.lowercase(Locale.getDefault())]
 }
